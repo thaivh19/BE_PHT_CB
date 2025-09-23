@@ -1,0 +1,34 @@
+### Additional Configuration ###
+backend:
+  migrate-db-on-start: false
+  migrate-db-locations:
+    - classpath:db/migration
+  http-logging:
+    style: pretty
+    log-request: true
+    log-response: true
+    #masking-attributes: password
+  logging-integration:
+    sendRequestResponseLog: true
+    save-to-db-task-delay: 1000
+    request-response: #request response service log
+      save-to-db: true
+      send-log: true
+      kafka-topics:
+        - name: asim-activity-log-topic
+    audit: #change database audit log
+      save-to-db: true
+      send-log: true
+      kafka-topics:
+        - name: asim-audit-log-topic
+    api: #restful api log
+      save-to-db: true
+      send-log: true
+      kafka-topics:
+        - name: asim-api-log-topic
+#  message-basenames: classpath:/messages/messages_vi,classpath:/messages/messages,classpath:/messages/api_error_messages,classpath:/messages/api_response_messages
+  message-basenames: classpath:/messages/messages,classpath:/messages/api_error_messages,classpath:/messages/api_response_messages
+  message-default-locale: vi
+### Cache Configuration ###
+cache-manager:
+  enabled: true

@@ -1,0 +1,35 @@
+spring:
+  jackson:
+    date-format: dd/MM/yyyy
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+  config.import:
+    - classpath:backend-config.yml
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  webflux:
+    cors:
+      enabled: true
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    call-setters-on-nulls: true
+    jdbc-type-for-null: null
+    default-fetch-size: 100
+  mapper-locations: classpath:mybatis/*.xml
+  type-handlers-package: com.fis.type
+logging:
+  level:
+    com.zaxxer.hikari: debug
+    org.hibernate.sql: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
+    org.hibernate.engine.jdbc.batch.internal.BatchingBatch: debug
+    org.keycloak.adapters: error
+    com.fis.core: debug
+    org.springframework.xml.transform.TransformerFactoryUtils: error #disable warn log of docx4j
+    org.hibernate.type.BasicTypeRegistry: OFF
+

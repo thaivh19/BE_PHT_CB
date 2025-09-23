@@ -1,0 +1,113 @@
+/*
+ * Created on Oct 14, 2010
+ *
+ * TODO To change the template for this generated file go to
+ * Window - Preferences - Java - Code Style - Code Templates
+ */
+package com.pht.utils;
+import java.net.*;
+import java.util.*;
+import java.security.*;
+
+public class UUIDGenerator extends Object {
+
+	public String valueBeforeMD5 = "";
+
+	public String valueAfterMD5 = "";
+
+	private static Random myRand;
+
+	private static SecureRandom mySecureRand;
+
+	private static String s_id;
+
+	static {
+		mySecureRand = new SecureRandom();
+		long secureInitializer = mySecureRand.nextLong();
+		myRand = new Random(secureInitializer);
+		try {
+			s_id = InetAddress.getLocalHost().toString();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	public UUIDGenerator() {
+		getRandomGUID(false);
+	}
+
+	public UUIDGenerator(boolean secure) {
+		getRandomGUID(secure);
+	}
+
+	private Object lock = new Object();
+
+	private void getRandomGUID(boolean secure) {
+		synchronized (lock) {
+			MessageDigest md5 = null;
+			StringBuffer sbValueBeforeMD5 = new StringBuffer();
+
+			try {
+				md5 = MessageDigest.getInstance("MD5");
+			} catch (NoSuchAlgorithmException e) {
+				System.out.println("Error: " + e);
+			}
+
+			try {
+				long time = System.currentTimeMillis();
+				long rand = 0;
+
+				if (secure) {
+					rand = mySecureRand.nextLong();
+				} else {
+					rand = myRand.nextLong();
+				}
+
+				sbValueBeforeMD5.append(s_id);
+				sbValueBeforeMD5.append(":");
+				sbValueBeforeMD5.append(Long.toString(time));
+				sbValueBeforeMD5.append(":");
+				sbValueBeforeMD5.append(Long.toString(rand));
+
+				valueBeforeMD5 = sbValueBeforeMD5.toString();
+				md5.update(valueBeforeMD5.getBytes());
+
+				byte[] array = md5.digest();
+				StringBuffer sb = new StringBuffer();
+				for (int j = 0; j < array.length; ++j) {
+					int b = array[j] & 0xFF;
+					if (b < 0x10)
+						sb.append('0');
+					sb.append(Integer.toHexString(b));
+				}
+
+				valueAfterMD5 = sb.toString();
+
+			} catch (Exception e) {
+				System.out.println("Error:" + e);
+			}
+		}
+	}
+
+	public String toString() {
+		String raw = valueAfterMD5.toUpperCase();
+		StringBuffer sb = new StringBuffer();
+		sb.append(raw.substring(0, 8));
+		sb.append("-");
+		sb.append(raw.substring(8, 12));
+		sb.append("-");
+		sb.append(raw.substring(12, 16));
+		sb.append("-");
+		sb.append(raw.substring(16, 20));
+		sb.append("-");
+		sb.append(raw.substring(20));
+
+		return sb.toString();
+	}
+	
+	/*public static void main(String[] args) {
+		UUIDGenerator r = new UUIDGenerator(false);
+		System.out.print(r.toString());
+	}*/
+}
