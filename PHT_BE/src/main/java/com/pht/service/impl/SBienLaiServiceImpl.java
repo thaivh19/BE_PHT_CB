@@ -1,5 +1,6 @@
 package com.pht.service.impl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +21,8 @@ import com.pht.model.request.SBienLaiCreateRequest;
 import com.pht.model.request.SBienLaiSearchRequest;
 import com.pht.model.request.SBienLaiUpdateRequest;
 import com.pht.model.response.CatalogSearchResponse;
+import com.pht.model.response.BlThuReportItem;
+import com.pht.model.response.KhoBlReportItem;
 import com.pht.repository.SBienLaiRepository;
 import com.pht.repository.ToKhaiThongTinRepository;
 import com.pht.service.SBienLaiService;
@@ -294,6 +297,45 @@ public class SBienLaiServiceImpl extends BaseServiceImpl<SBienLai, Long> impleme
             return sBienLaiRepository.findByMaBl(maBl);
         }
         return null;
+    }
+    
+    @Override
+    public List<BlThuReportItem> reportBlThu(LocalDate fromDate, LocalDate toDate) {
+        log.info("Báo cáo BL thu từ {} đến {}", fromDate, toDate);
+        if (fromDate == null || toDate == null) {
+            throw new IllegalArgumentException("fromDate và toDate không được null");
+        }
+        // Quy ước: khoảng [fromDate, toDate] bao gồm cả toDate -> chuyển toDate+1 ngày cho truy vấn < toDateExclusive
+        LocalDateTime fromDateTime = fromDate.atStartOfDay();
+        LocalDateTime toDateExclusive = toDate.plusDays(1).atStartOfDay();
+        return sBienLaiRepository.reportBlThu(fromDateTime, toDateExclusive);
+    }
+
+    @Override
+    public List<KhoBlReportItem> reportByKho(LocalDate fromDate, LocalDate toDate) {
+        log.info("Báo cáo BL theo kho từ {} đến {}", fromDate, toDate);
+        if (fromDate == null || toDate == null) {
+            throw new IllegalArgumentException("fromDate và toDate không được null");
+        }
+        LocalDateTime fromDateTime = fromDate.atStartOfDay();
+        LocalDateTime toDateExclusive = toDate.plusDays(1).atStartOfDay();
+        List<Object[]> rows = sBienLaiRepository.reportByKhoRaw(fromDateTime, toDateExclusive);
+        java.math.BigDecimal totalAmount = rows.stream()
+            .map(r -> r[1] == null ? java.math.BigDecimal.ZERO : (java.math.BigDecimal) r[1])
+            .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        java.util.List<KhoBlReportItem> result = new java.util.ArrayList<>();
+        for (Object[] r : rows) {
+            String maKho = (String) r[0];
+            java.math.BigDecimal tongTien = r[1] == null ? java.math.BigDecimal.ZERO : (java.math.BigDecimal) r[1];
+            Long soBienLai = r[2] == null ? 0L : ((Number) r[2]).longValue();
+            java.math.BigDecimal tyLe = java.math.BigDecimal.ZERO;
+            if (totalAmount.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                tyLe = tongTien.multiply(java.math.BigDecimal.valueOf(100))
+                        .divide(totalAmount, java.math.MathContext.DECIMAL64);
+            }
+            result.add(new KhoBlReportItem(maKho, tongTien, soBienLai, tyLe));
+        }
+        return result;
     }
     
     /**

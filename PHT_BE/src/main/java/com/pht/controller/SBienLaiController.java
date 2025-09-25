@@ -1,5 +1,6 @@
 package com.pht.controller;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,8 @@ import com.pht.model.request.SBienLaiCreateRequest;
 import com.pht.model.request.SBienLaiSearchRequest;
 import com.pht.model.request.SBienLaiUpdateRequest;
 import com.pht.model.response.CatalogSearchResponse;
+import com.pht.model.response.BlThuReportItem;
+import com.pht.model.response.KhoBlReportItem;
 import com.pht.service.SBienLaiService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -60,6 +63,52 @@ public class SBienLaiController {
         try {
             CatalogSearchResponse<SBienLai> result = sBienLaiService.getAllBienLaiWithPagination(page, size, sortBy, sortDir);
             return ResponseHelper.ok(result);
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return ResponseHelper.error(ex);
+        }
+    }
+
+    @Operation(summary = "Báo cáo BL thu theo khoảng ngày (lọc tờ khai trạng thái = '04')")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Thành công", content = {
+                    @Content(schema = @Schema(implementation = ApiDataResponse.class), mediaType = "application/json")
+            }),
+            @ApiResponse(responseCode = "500", description = "Lỗi", content = {
+                    @Content(schema = @Schema(implementation = OrderBy.ApiErrorResponse.class), mediaType = "application/json")
+            })
+    })
+    @GetMapping("/bao-cao-bl-thu")
+    public ResponseEntity<?> reportBlThu(@RequestParam("fromDate") String fromDateStr,
+                                         @RequestParam("toDate") String toDateStr) {
+        try {
+            LocalDate fromDate = LocalDate.parse(fromDateStr);
+            LocalDate toDate = LocalDate.parse(toDateStr);
+            List<BlThuReportItem> data = sBienLaiService.reportBlThu(fromDate, toDate);
+            return ResponseHelper.ok(data);
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return ResponseHelper.error(ex);
+        }
+    }
+
+    @Operation(summary = "Báo cáo BL theo mã kho trong khoảng ngày (tờ khai TT='04')")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Thành công", content = {
+                    @Content(schema = @Schema(implementation = ApiDataResponse.class), mediaType = "application/json")
+            }),
+            @ApiResponse(responseCode = "500", description = "Lỗi", content = {
+                    @Content(schema = @Schema(implementation = OrderBy.ApiErrorResponse.class), mediaType = "application/json")
+            })
+    })
+    @GetMapping("/bao-cao-theo-kho")
+    public ResponseEntity<?> reportByKho(@RequestParam("fromDate") String fromDateStr,
+                                         @RequestParam("toDate") String toDateStr) {
+        try {
+            LocalDate fromDate = LocalDate.parse(fromDateStr);
+            LocalDate toDate = LocalDate.parse(toDateStr);
+            List<KhoBlReportItem> data = sBienLaiService.reportByKho(fromDate, toDate);
+            return ResponseHelper.ok(data);
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
             return ResponseHelper.error(ex);

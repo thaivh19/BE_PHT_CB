@@ -108,20 +108,24 @@ public class ToKhaiThongTinController {
         try {
             log.info("Nhận yêu cầu lấy danh sách tờ khai trạng thái 02 và 03");
             
-            // Lấy tờ khai trạng thái 02
-            List<StoKhai> toKhai02List = toKhaiThongTinService.findByTrangThai("02");
-            log.info("Tìm thấy {} tờ khai với trạng thái 02", toKhai02List.size());
-            
+             // Lấy tờ khai trạng thái 02
+             List<StoKhai> toKhai02List = toKhaiThongTinService.findByTrangThai("02");
+             log.info("Tìm thấy {} tờ khai với trạng thái 02", toKhai02List.size());
+
             // Lấy tờ khai trạng thái 03
             List<StoKhai> toKhai03List = toKhaiThongTinService.findByTrangThai("03");
             log.info("Tìm thấy {} tờ khai với trạng thái 03", toKhai03List.size());
+            
+         // Lấy tờ khai trạng thái 04
+            List<StoKhai> toKhai04List = toKhaiThongTinService.findByTrangThai("04");
+            log.info("Tìm thấy {} tờ khai với trạng thái 04", toKhai04List.size());
             
             // Gộp 2 danh sách
             List<StoKhai> combinedList = new ArrayList<>();
             combinedList.addAll(toKhai02List);
             combinedList.addAll(toKhai03List);
-            
-            log.info("Tổng cộng tìm thấy {} tờ khai với trạng thái 02 và 03", combinedList.size());
+            combinedList.addAll(toKhai04List);
+            log.info("Tổng cộng tìm thấy {} tờ khai với trạng thái 02 ,03 ,04", combinedList.size());
             
             return ResponseHelper.ok(combinedList);
         } catch (Exception ex) {
