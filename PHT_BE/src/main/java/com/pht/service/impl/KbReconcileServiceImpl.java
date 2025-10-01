@@ -196,12 +196,16 @@ public class KbReconcileServiceImpl implements KbReconcileService {
             if (kbAmount.compareTo(systemAmount) == 0) {
                 // Số tiền khớp
                 foundTransaction.setKbDs("01");
-                foundTransaction.setGhiChu("Khớp");
+                foundTransaction.setTongTienPhiKb(kbAmount);
+                foundTransaction.setSoTienClKb(BigDecimal.ZERO);
+                foundTransaction.setGhiChuKb("Khớp");
                 log.debug("Transaction {}: Khớp số tiền", transId);
             } else {
                 // Số tiền không khớp
                 foundTransaction.setKbDs("02");
-                foundTransaction.setGhiChu("Lệch số tiền");
+                foundTransaction.setTongTienPhiKb(kbAmount);    
+                foundTransaction.setSoTienClKb(systemAmount.subtract(kbAmount).abs());
+                foundTransaction.setGhiChuKb("Lệch số tiền "+ systemAmount.subtract(kbAmount));
                 log.debug("Transaction {}: Lệch số tiền - KB: {}, Hệ thống: {}", 
                         transId, kbAmount, systemAmount);
             }
@@ -390,7 +394,7 @@ public class KbReconcileServiceImpl implements KbReconcileService {
                 // Cập nhật trạng thái cho các transaction thừa từ hệ thống
                 for (SDoiSoatCt extraCt : extraSystemTransactions) {
                     extraCt.setKbDs("03");
-                    extraCt.setGhiChu("Không tìm thấy giao dịch");
+                    extraCt.setGhiChuKb("Không tìm thấy giao dịch");
                     sDoiSoatCtRepository.save(extraCt);
                 }
             } else {

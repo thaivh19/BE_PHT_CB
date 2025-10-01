@@ -25,6 +25,10 @@ import com.pht.model.request.SBienLaiCreateRequest;
 import com.pht.model.request.SBienLaiCtCreateRequest;
 import com.pht.model.request.UpdateTrangThaiPhatHanhRequest;
 import com.pht.service.ToKhaiThongTinService;
+import com.pht.controller.BankWebhookController;
+import com.pht.controller.BankReconcileController;
+import com.pht.controller.KbReconcileController;
+import com.pht.model.response.BankWebhookResponse;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -55,6 +59,15 @@ public class AutoTaskJob {
 
 	@Autowired
 	private ToKhaiThongTinService toKhaiThongTinService;
+
+	@Autowired
+	private BankWebhookController bankWebhookController;
+
+	@Autowired
+	private BankReconcileController bankReconcileController;
+
+	@Autowired
+	private KbReconcileController kbReconcileController;
 
 	private static final String PARAM_JOB_ENABLED = "BL_AUTO_JOB"; // 1: on, 0: off
 
@@ -92,6 +105,89 @@ public class AutoTaskJob {
 		}
 		String value = param.getGiaTri().trim();
 		return !"0".equals(value) && !"false".equalsIgnoreCase(value);
+	}
+
+	/**
+	 * Job tự động chạy simulate-payment mỗi 3 phút
+	 * Có thể tắt/bật qua tham số hệ thống trong DB: STHAM_SO(MA_TS = SIMULATE_PAYMENT_AUTO_JOB)
+	 */
+	@Scheduled(fixedDelayString = "180000") // 3 phút = 180000 ms
+	public void runSimulatePaymentTask() {
+		try {
+
+			log.info("[SIMULATE-PAYMENT] Bắt đầu chạy job simulate-payment định kỳ (3 phút)");
+
+			// Gọi simulate-payment endpoint với danh sách rỗng để tự động tìm các đơn có TT_NH = "00"
+			java.util.List<String> emptyList = new java.util.ArrayList<>();
+			org.springframework.http.ResponseEntity<java.util.List<BankWebhookResponse>> response = 
+				bankWebhookController.simulatePaymentNotifications(emptyList);
+			
+			if (response.getStatusCode().is2xxSuccessful()) {
+				java.util.List<BankWebhookResponse> responses = response.getBody();
+				if (responses != null) {
+					log.info("[SIMULATE-PAYMENT] Đã xử lý {} giao dịch simulate-payment", responses.size());
+				} else {
+					log.info("[SIMULATE-PAYMENT] Không có giao dịch nào được xử lý");
+				}
+			} else {
+				log.warn("[SIMULATE-PAYMENT] Lỗi khi gọi simulate-payment: status={}", response.getStatusCode());
+			}
+
+			log.info("[SIMULATE-PAYMENT] Kết thúc chạy job simulate-payment định kỳ");
+		} catch (Exception ex) {
+			log.error("[SIMULATE-PAYMENT] Lỗi khi thực thi job simulate-payment: ", ex);
+		}
+	}
+
+	/**
+	 * Job tự động chạy simulate-matched mỗi 3 phút
+	 * Có thể tắt/bật qua tham số hệ thống trong DB: STHAM_SO(MA_TS = SIMULATE_MATCHED_AUTO_JOB)
+	 */
+	@Scheduled(fixedDelayString = "180000") // 3 phút = 180000 ms
+	public void runSimulateMatchedTask() {
+		try {
+			log.info("[SIMULATE-MATCHED] Bắt đầu chạy job simulate-matched định kỳ (3 phút)");
+
+			// Gọi simulate-matched endpoint
+			org.springframework.http.ResponseEntity<?> response = bankReconcileController.simulateMatched();
+			
+			if (response.getStatusCode().is2xxSuccessful()) {
+				Object responseBody = response.getBody();
+				log.info("[SIMULATE-MATCHED] Đã thực hiện simulate-matched thành công: {}", responseBody);
+			} else {
+				log.warn("[SIMULATE-MATCHED] Lỗi khi gọi simulate-matched: status={}", response.getStatusCode());
+			}
+
+			log.info("[SIMULATE-MATCHED] Kết thúc chạy job simulate-matched định kỳ");
+		} catch (Exception ex) {
+			log.error("[SIMULATE-MATCHED] Lỗi khi thực thi job simulate-matched: ", ex);
+		}
+	}
+
+	/**
+	 * Job tự động chạy simulate-mismatched mỗi 3 phút
+	 * Có thể tắt/bật qua tham số hệ thống trong DB: STHAM_SO(MA_TS = SIMULATE_MISMATCHED_AUTO_JOB)
+	 */
+	@Scheduled(fixedDelayString = "180000") // 3 phút = 180000 ms
+	public void runSimulateMismatchedTask() {
+		try {
+
+			log.info("[SIMULATE-MISMATCHED] Bắt đầu chạy job simulate-mismatched định kỳ (3 phút)");
+
+			// Gọi simulate-mismatched endpoint
+			org.springframework.http.ResponseEntity<?> response = kbReconcileController.simulateMismatched();
+			
+			if (response.getStatusCode().is2xxSuccessful()) {
+				Object responseBody = response.getBody();
+				log.info("[SIMULATE-MISMATCHED] Đã thực hiện simulate-mismatched thành công: {}", responseBody);
+			} else {
+				log.warn("[SIMULATE-MISMATCHED] Lỗi khi gọi simulate-mismatched: status={}", response.getStatusCode());
+			}
+
+			log.info("[SIMULATE-MISMATCHED] Kết thúc chạy job simulate-mismatched định kỳ");
+		} catch (Exception ex) {
+			log.error("[SIMULATE-MISMATCHED] Lỗi khi thực thi job simulate-mismatched: ", ex);
+		}
 	}
 
 	/**

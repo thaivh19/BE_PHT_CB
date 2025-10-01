@@ -201,12 +201,16 @@ public class BankReconcileServiceImpl implements BankReconcileService {
             if (bankAmount.compareTo(systemAmount) == 0) {
                 // Số tiền khớp
                 foundTransaction.setNhDs("01");
-                foundTransaction.setGhiChu("Khớp");
+                foundTransaction.setTongTienPhiNh(bankAmount);
+                foundTransaction.setSoTienClNh(BigDecimal.ZERO);
+                foundTransaction.setGhiChuNh("Khớp");
                 log.debug("Transaction {}: Khớp số tiền", transId);
             } else {
                 // Số tiền không khớp
                 foundTransaction.setNhDs("02");
-                foundTransaction.setGhiChu("Lệch số tiền");
+                foundTransaction.setTongTienPhiNh(bankAmount);
+                foundTransaction.setSoTienClNh(systemAmount.subtract(bankAmount).abs());
+                foundTransaction.setGhiChuNh("Lệch số tiền "+ systemAmount.subtract(bankAmount));
                 log.debug("Transaction {}: Lệch số tiền - NH: {}, Hệ thống: {}", 
                         transId, bankAmount, systemAmount);
             }
@@ -403,7 +407,7 @@ public class BankReconcileServiceImpl implements BankReconcileService {
                 // Cập nhật trạng thái cho các transaction thừa từ hệ thống
                 for (SDoiSoatCt extraCt : extraSystemTransactions) {
                     extraCt.setNhDs("03");
-                    extraCt.setGhiChu("Không tìm thấy giao dịch");
+                    extraCt.setGhiChuNh("Không tìm thấy giao dịch");
                     sDoiSoatCtRepository.save(extraCt);
                     
                 }

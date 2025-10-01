@@ -428,7 +428,7 @@ public class ExcelExportServiceImpl implements ExcelExportService {
         String[] headers = {
             "STT", "ID", "DOI SOAT ID", "STO KHAI ID", "Số tờ khai", "Ngày tờ khai", 
             "Số TN KP", "Ngày TN KP", "Mã DN", "Tên DN", "Tổng tiền phí", "Trans ID",
-            "Ngân hàng", "NH DS", "KB DS", "Ghi chú"
+            "Ngân hàng", "NH DS", "KB DS", "Ghi chú NH", "Ghi chú KB"
         };
         
         for (int i = 0; i < headers.length; i++) {
@@ -458,7 +458,8 @@ public class ExcelExportServiceImpl implements ExcelExportService {
             row.createCell(colIndex++).setCellValue(item.getNganHang() != null ? item.getNganHang() : "");
             row.createCell(colIndex++).setCellValue(getNhDsStatusText(item.getNhDs()));
             row.createCell(colIndex++).setCellValue(getKbDsStatusText(item.getKbDs()));
-            row.createCell(colIndex++).setCellValue(item.getGhiChu() != null ? item.getGhiChu() : "");
+            row.createCell(colIndex++).setCellValue(item.getGhiChuNh() != null ? item.getGhiChuNh() : "");
+            row.createCell(colIndex++).setCellValue(item.getGhiChuKb() != null ? item.getGhiChuKb() : "");
         }
         
         // Auto-size columns
@@ -546,7 +547,8 @@ public class ExcelExportServiceImpl implements ExcelExportService {
                     detailRow.createCell(colIndex++).setCellValue(getKbDsStatusText(chiTiet.getKbDs()));
                     detailRow.createCell(colIndex++).setCellValue(chiTiet.getTransId() != null ? chiTiet.getTransId() : "");
                     detailRow.createCell(colIndex++).setCellValue(chiTiet.getNganHang() != null ? chiTiet.getNganHang() : "");
-                    detailRow.createCell(colIndex++).setCellValue(chiTiet.getGhiChu() != null ? chiTiet.getGhiChu() : "");
+                    detailRow.createCell(colIndex++).setCellValue(chiTiet.getGhiChuNh() != null ? chiTiet.getGhiChuNh() : "");
+                    detailRow.createCell(colIndex++).setCellValue(chiTiet.getGhiChuKb() != null ? chiTiet.getGhiChuKb() : "");
                 }
                 
                 // Thêm một dòng trống để phân cách giữa các đối soát

@@ -38,7 +38,12 @@ public class DoiSoatCtResponse {
     private String nganHang;
     private String nhDs;
     private String kbDs;
-    private String ghiChu;
+    private String ghiChuNh;
+    private String ghiChuKb;
+    private BigDecimal tongTienPhiNh;
+    private BigDecimal tongTienPhiKb;
+    private BigDecimal soTienClNh;
+    private BigDecimal soTienClKb;
     
     public DoiSoatCtResponse(SDoiSoatCt doiSoatCt) {
         this.id = doiSoatCt.getId();
@@ -70,6 +75,11 @@ public class DoiSoatCtResponse {
         this.nganHang = doiSoatCt.getNganHang();
         this.nhDs = doiSoatCt.getNhDs();
         this.kbDs = doiSoatCt.getKbDs();
-        this.ghiChu = doiSoatCt.getGhiChu();
+        this.tongTienPhiNh = doiSoatCt.getTongTienPhiNh();
+        this.tongTienPhiKb = doiSoatCt.getTongTienPhiKb();
+        this.soTienClNh = doiSoatCt.getSoTienClNh();
+        this.soTienClKb = doiSoatCt.getSoTienClKb();
+        this.ghiChuNh = doiSoatCt.getGhiChuNh();
+        this.ghiChuKb = doiSoatCt.getGhiChuKb();
     }
 }
