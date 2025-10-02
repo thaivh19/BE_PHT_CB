@@ -125,7 +125,7 @@ public class ToKhaiThongTinController {
             combinedList.addAll(toKhai02List);
             combinedList.addAll(toKhai03List);
             combinedList.addAll(toKhai04List);
-            log.info("Tổng cộng tìm thấy {} tờ khai với trạng thái 02 ,03 ,04", combinedList.size());
+            log.info("Tổng cộng tìm thấy {} tờ khai với trạng thái 02  ,03 ,04", combinedList.size());
             
             return ResponseHelper.ok(combinedList);
         } catch (Exception ex) {
