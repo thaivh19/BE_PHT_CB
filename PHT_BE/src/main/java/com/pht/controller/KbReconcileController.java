@@ -122,7 +122,7 @@ public class KbReconcileController {
             KbReconcileRequest.KbTransaction tx = new KbReconcileRequest.KbTransaction();
             tx.setTransId(ct.getTransId());
             BigDecimal base = ct.getTongTienPhi() != null ? ct.getTongTienPhi() : BigDecimal.ZERO;
-            tx.setAmount(base.add(BigDecimal.ONE));
+            tx.setAmount(base.add(BigDecimal.valueOf(200000)));
             txs.add(tx);
         }
 

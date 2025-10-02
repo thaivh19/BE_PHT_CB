@@ -213,7 +213,7 @@ public class DoiSoatServiceImpl implements DoiSoatService {
             // Set các giá trị đối soát cho chi tiết
             chiTiet.setNhDs("00"); // Ngân hàng đối soát
             chiTiet.setKbDs("00"); // Kho bạc đối soát
-            chiTiet.setGhiChu(""); // Ghi chú mặc định
+            chiTiet.setGhiChuNh(""); // Ghi chú mặc định
             
             chiTietList.add(chiTiet);
         }

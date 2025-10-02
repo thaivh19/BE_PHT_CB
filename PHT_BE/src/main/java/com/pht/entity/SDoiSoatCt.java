@@ -65,8 +65,23 @@ public class SDoiSoatCt {
     @Column(name = "KB_DS", length = 200)
     private String kbDs; // Kho bạc đối soát
 
-    @Column(name = "GHI_CHU", length = 500)
-    private String ghiChu; // Ghi chú
+    @Column(name = "GHI_CHU_NH", length = 500)
+    private String ghiChuNh; // Ghi chú ngân hàng
+
+    @Column(name = "GHI_CHU_KB", length = 500)
+    private String ghiChuKb; // Ghi chú kho bạc
+
+    @Column(name = "TONG_TIEN_PHI_NH")
+    private java.math.BigDecimal tongTienPhiNh; // Tổng tiền phí ngân hàng
+
+    @Column(name = "TONG_TIEN_PHI_KB")
+    private java.math.BigDecimal tongTienPhiKb; // Tổng tiền phí kho bạc
+
+    @Column(name = "SO_TIEN_CL_NH")
+    private java.math.BigDecimal soTienClNh; // Số tiền chênh lệch ngân hàng
+
+    @Column(name = "SO_TIEN_CL_KB")
+    private java.math.BigDecimal soTienClKb; // Số tiền chênh lệch kho bạc
 
     // Relationship với SDoiSoat
     @ManyToOne
