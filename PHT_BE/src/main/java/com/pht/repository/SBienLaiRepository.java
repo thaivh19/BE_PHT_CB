@@ -56,14 +56,14 @@ public interface SBienLaiRepository extends BaseRepository<SBienLai, Long> {
      * trong khoảng thời gian theo ngày biên lai, nhóm theo MST và ngày, tính tổng số tiền
      * từ các chi tiết biên lai.
      */
-    @Query("SELECT new com.pht.model.response.BlThuReportItem(bl.mst, bl.tenDvi, CAST(bl.ngayBl AS date), SUM(ct.soTien), COUNT(DISTINCT bl.id))\n"
-         + " FROM SBienLai bl JOIN SBienLaiCt ct ON ct.blId = bl.id\n"
-         + " JOIN StoKhai tk ON tk.idBienLai = bl.id\n"
-         + " WHERE tk.trangThai = '04'\n"
-         + "   AND bl.ngayBl >= :fromDate AND bl.ngayBl < :toDate\n"
-         + " GROUP BY bl.mst, bl.tenDvi, CAST(bl.ngayBl AS date)")
-    List<BlThuReportItem> reportBlThu(@Param("fromDate") LocalDateTime fromDate,
-                                      @Param("toDate") LocalDateTime toDate);
+    @Query(value = "SELECT bl.mst, bl.ten_dvi, DATE(bl.ngay_bl) as ngay, SUM(ct.so_tien) as tong_tien, COUNT(DISTINCT bl.id) as so_bien_lai\n"
+         + " FROM SBIEN_LAI bl JOIN SBIEN_LAI_CT ct ON ct.bl_id = bl.id\n"
+         + " JOIN STO_KHAI tk ON tk.id_bien_lai = bl.id\n"
+         + " WHERE tk.trangthai = '04'\n"
+         + "   AND bl.ngay_bl >= :fromDate AND bl.ngay_bl < :toDate\n"
+         + " GROUP BY bl.mst, bl.ten_dvi, DATE(bl.ngay_bl)", nativeQuery = true)
+    List<Object[]> reportBlThuRaw(@Param("fromDate") LocalDateTime fromDate,
+                                  @Param("toDate") LocalDateTime toDate);
 
     /**
      * Tổng hợp theo mã kho (lấy từ StoKhai.maLuuKho) cho các tờ khai trạng thái '04'

@@ -11,10 +11,14 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 import com.pht.entity.StoKhai;
 import com.pht.entity.StoKhaiCt;
 import com.pht.exception.BusinessException;
 import com.pht.model.request.NotificationRequest;
+import com.pht.model.request.ToKhaiFilterRequest;
 import com.pht.model.request.ToKhaiThongTinChiTietRequest;
 import com.pht.model.request.ToKhaiThongTinRequest;
 import com.pht.model.request.UpdateTrangThaiRequest;
@@ -38,6 +42,9 @@ public class ToKhaiThongTinServiceImpl extends BaseServiceImpl<StoKhai, Long> im
     private final ToKhaiThongTinChiTietRepository toKhaiThongTinChiTietRepository;
     private final SbieuCuocRepository sbieuCuocRepository;
     private final SequenceGenerator sequenceGenerator;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
     
     // Atomic counter để tạo số thông báo duy nhất trong cùng thời điểm
     private static final AtomicInteger notificationCounter = new AtomicInteger(0);
@@ -262,6 +269,72 @@ public class ToKhaiThongTinServiceImpl extends BaseServiceImpl<StoKhai, Long> im
     public List<StoKhai> findByTrangThai(String trangThai) {
         log.info("Tìm tờ khai thông tin theo trạng thái: {}", trangThai);
         return toKhaiThongTinRepository.findByTrangThai(trangThai);
+    }
+    
+    @Override
+    public List<StoKhai> filterToKhai(ToKhaiFilterRequest request) {
+        log.info("Lọc tờ khai theo điều kiện: tuNgay={}, denNgay={}, trangThai={}", 
+                request.getTuNgay(), request.getDenNgay(), request.getTrangThai());
+        
+        // Xử lý null để tránh lỗi JDBC
+        java.time.LocalDate tuNgay = request.getTuNgay();
+        java.time.LocalDate denNgay = request.getDenNgay();
+        String trangThai = request.getTrangThai();
+        
+        // Nếu không có điều kiện nào, lấy tất cả
+        if (tuNgay == null && denNgay == null && (trangThai == null || trangThai.trim().isEmpty())) {
+            return toKhaiThongTinRepository.findAll();
+        }
+        
+        // Nếu chỉ có trạng thái
+        if ((tuNgay == null && denNgay == null) && trangThai != null && !trangThai.trim().isEmpty()) {
+            return toKhaiThongTinRepository.findByTrangThai(trangThai);
+        }
+        
+        // Nếu có ngày, sử dụng query với điều kiện ngày
+        if (tuNgay != null || denNgay != null) {
+            // Tạo query động dựa trên tham số có sẵn
+            StringBuilder query = new StringBuilder("SELECT * FROM STO_KHAI WHERE 1=1");
+            
+            if (tuNgay != null) {
+                query.append(" AND NGAY_KP >= :tuNgay");
+            }
+            if (denNgay != null) {
+                query.append(" AND NGAY_KP <= :denNgay");
+            }
+            if (trangThai != null && !trangThai.trim().isEmpty()) {
+                query.append(" AND TRANGTHAI = :trangThai");
+            }
+            
+            query.append(" ORDER BY NGAY_TK DESC, ID DESC");
+            
+            // Sử dụng EntityManager để thực thi query động
+            return executeDynamicQuery(query.toString(), tuNgay, denNgay, trangThai);
+        }
+        
+        return toKhaiThongTinRepository.findAll();
+    }
+    
+    private List<StoKhai> executeDynamicQuery(String query, java.time.LocalDate tuNgay, 
+                                            java.time.LocalDate denNgay, String trangThai) {
+        try {
+            jakarta.persistence.Query jpqlQuery = entityManager.createNativeQuery(query, StoKhai.class);
+            
+            if (tuNgay != null) {
+                jpqlQuery.setParameter("tuNgay", tuNgay);
+            }
+            if (denNgay != null) {
+                jpqlQuery.setParameter("denNgay", denNgay);
+            }
+            if (trangThai != null && !trangThai.trim().isEmpty()) {
+                jpqlQuery.setParameter("trangThai", trangThai);
+            }
+            
+            return jpqlQuery.getResultList();
+        } catch (Exception e) {
+            log.error("Lỗi khi thực thi query động: ", e);
+            return toKhaiThongTinRepository.findAll();
+        }
     }
     
     /**

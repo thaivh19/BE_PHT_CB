@@ -26,12 +26,15 @@ import com.pht.model.request.DeleteInvoiceRequest;
 import com.pht.model.request.ReplaceInvoiceRequest;
 import com.pht.model.request.SearchInvoiceRequest;
 import com.pht.model.request.UpdateTrangThaiPhatHanhRequest;
+import com.pht.model.request.UserRequest;
 import com.pht.model.response.CancelInvoiceResponse;
 import com.pht.model.response.DeleteInvoiceResponse;
 import com.pht.model.response.ReplaceInvoiceResponse;
 import com.pht.service.ToKhaiThongTinService;
 import com.pht.service.SBienLaiService;
+import com.pht.service.SthamSoService;
 import com.pht.util.PdfConverterUtil;
+import com.pht.utils.ConvertNumberToString;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -53,6 +56,7 @@ public class FptEInvoiceController {
     private final ObjectMapper objectMapper;
     private final ToKhaiThongTinService toKhaiThongTinService;
     private final SBienLaiService sBienLaiService;
+    private final SthamSoService sthamSoService;
     private final PdfConverterUtil pdfConverterUtil;
 
     @Value("${fpt.einvoice.api.url:https://api-uat.einvoice.fpt.com.vn}")
@@ -195,6 +199,7 @@ public class FptEInvoiceController {
     @PostMapping("/search-icr")
     public ResponseEntity<?> searchInvoice(@RequestBody SearchInvoiceRequest request) {
         try {
+
             log.info("Nhận yêu cầu tìm kiếm hóa đơn - STAX: {}, Type: {}, SID: {}, Username: {}, ToKhaiId: {}", 
                     request.getStax(), request.getType(), request.getSid(), request.getUser().getUsername(), request.getToKhaiId());
             
@@ -278,6 +283,20 @@ public class FptEInvoiceController {
         try {
             log.info("Nhận yêu cầu tạo ICR e-invoice, toKhaiId: {}", request.getToKhaiId());
             
+            // Lấy thông tin username và password từ bảng sthamso
+            String username = getParameterValue("BL_USER");
+            String password = getParameterValue("BL_PW");
+            
+            // Cập nhật thông tin user trong request nếu có
+            if (username != null && password != null) {
+                if (request.getUser() == null) {
+                    request.setUser(new UserRequest());
+                }
+                request.getUser().setUsername(username);
+                request.getUser().setPassword(password);
+                log.info("Đã cập nhật thông tin user từ bảng sthamso: username={}", username);
+            }
+            
             String fptResponse = callCreateIcrApi(request);
             
             log.info("Tạo ICR hoàn thành - Response: {}", fptResponse);
@@ -319,6 +338,20 @@ public class FptEInvoiceController {
         try {
             log.info("Nhận yêu cầu cập nhật ICR e-invoice");
             
+            // Lấy thông tin username và password từ bảng sthamso
+            String username = getParameterValue("BL_USER");
+            String password = getParameterValue("BL_PW");
+            
+            // Cập nhật thông tin user trong request nếu có
+            if (username != null && password != null) {
+                if (request.getUser() == null) {
+                    request.setUser(new UserRequest());
+                }
+                request.getUser().setUsername(username);
+                request.getUser().setPassword(password);
+                log.info("Đã cập nhật thông tin user từ bảng sthamso: username={}", username);
+            }
+            
             String fptResponse = callUpdateIcrApi(request);
             
             log.info("Cập nhật ICR hoàn thành - Response: {}", fptResponse);
@@ -334,6 +367,20 @@ public class FptEInvoiceController {
     }
 
     // Private methods for API calls
+    private String getParameterValue(String maTs) {
+        try {
+            com.pht.entity.SthamSo sthamSo = sthamSoService.findByMaTs(maTs);
+            if (sthamSo != null) {
+                return sthamSo.getGiaTri();
+            }
+            log.warn("Không tìm thấy tham số với mã: {}", maTs);
+            return null;
+        } catch (Exception e) {
+            log.error("Lỗi khi lấy tham số từ database với mã {}: ", maTs, e);
+            return null;
+        }
+    }
+    
     private HttpHeaders createBasicAuthHeaders() {
         return createBasicAuthHeaders(apiUsername, apiPassword);
     }
@@ -406,7 +453,11 @@ public class FptEInvoiceController {
 
     private String callSearchInvoiceApi(SearchInvoiceRequest request) throws BusinessException {
         try {
-            HttpHeaders headers = createBasicAuthHeaders(request.getUser().getUsername(), request.getUser().getPassword());
+
+            String usernameHeader = getParameterValue("BL_USER");
+            String passwordHeader = getParameterValue("BL_PW");
+   
+            HttpHeaders headers = createBasicAuthHeaders(usernameHeader, passwordHeader);
             
             // Không cần request body, chỉ cần Basic Auth
             HttpEntity<String> entity = new HttpEntity<>(headers);
@@ -442,6 +493,7 @@ public class FptEInvoiceController {
             HttpHeaders headers = createBasicAuthHeaders();
 
             // Tạo request body không bao gồm toKhaiId (chỉ gửi user và receipt sang FPT)
+            ensureVietnameseAmountWord(request);
             java.util.Map<String, Object> fptRequest = new java.util.HashMap<>();
             fptRequest.put("user", request.getUser());
             fptRequest.put("receipt", request.getReceipt());
@@ -463,6 +515,7 @@ public class FptEInvoiceController {
             HttpHeaders headers = createBasicAuthHeaders();
 
             // Tạo request body không bao gồm toKhaiId (chỉ gửi user và receipt sang FPT)
+            ensureVietnameseAmountWord(request);
             java.util.Map<String, Object> fptRequest = new java.util.HashMap<>();
             fptRequest.put("user", request.getUser());
             fptRequest.put("receipt", request.getReceipt());
@@ -477,6 +530,51 @@ public class FptEInvoiceController {
         } catch (Exception e) {
             throw new BusinessException("Lỗi khi gọi API cập nhật ICR: " + e.getMessage());
         }
+    }
+
+    // Đảm bảo field 'word' trong receipt là chữ số tiền tiếng Việt
+    @SuppressWarnings("unchecked")
+    private void ensureVietnameseAmountWord(CreateIcrRequest request) {
+        try {
+            Object receiptObj = request.getReceipt();
+            if (!(receiptObj instanceof java.util.Map)) return;
+            java.util.Map<String, Object> receipt = (java.util.Map<String, Object>) receiptObj;
+
+            Object wordObj = receipt.get("word");
+            String wordStr = wordObj != null ? String.valueOf(wordObj).trim() : "";
+
+
+            Long amount = extractAmountValue(receipt);
+            if (amount != null && amount >= 0) {
+                String viWords = ConvertNumberToString.converNumToString(String.valueOf(amount));
+                receipt.put("word", viWords);
+                log.info("Đã tự động set receipt.word='{}' theo số tiền {}", viWords, amount);
+            }
+        } catch (Exception e) {
+            log.warn("Không thể xử lý receipt.word: {}", e.getMessage());
+        }
+    }
+
+    // Lấy số tiền ưu tiên theo các key thường dùng
+    @SuppressWarnings("unchecked")
+    private Long extractAmountValue(java.util.Map<String, Object> receipt) {
+        // Chỉ lấy từ khóa total
+        if (receipt.containsKey("total")) {
+            return parseLongSafely(receipt.get("total"));
+        }
+        return null;
+    }
+
+    private boolean isNumeric(String s) {
+        try { Long.parseLong(s.replace(".", "").replace(",", "")); return true; } catch (Exception e) { return false; }
+    }
+
+    private Long parseLongSafely(Object v) {
+        if (v == null) return null;
+        if (v instanceof Number) return ((Number) v).longValue();
+        String s = String.valueOf(v).trim();
+        if (s.isEmpty()) return null;
+        try { return Long.parseLong(s.replace(".", "").replace(",", "")); } catch (Exception e) { return null; }
     }
 
     /**

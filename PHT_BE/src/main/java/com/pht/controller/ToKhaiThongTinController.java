@@ -17,6 +17,7 @@ import com.pht.common.helper.ResponseHelper;
 import com.pht.entity.StoKhai;
 import com.pht.exception.BusinessException;
 import com.pht.model.request.NotificationRequest;
+import com.pht.model.request.ToKhaiFilterRequest;
 import com.pht.model.request.ToKhaiThongTinRequest;
 import com.pht.model.request.UpdateTrangThaiPhatHanhRequest;
 import com.pht.model.request.UpdateTrangThaiRequest;
@@ -297,6 +298,35 @@ public class ToKhaiThongTinController {
             return ResponseHelper.error(ex);
         } catch (Exception ex) {
             log.error("Lỗi khi cập nhật trạng thái phát hành: ", ex);
+            return ResponseHelper.error(ex);
+        }
+    }
+
+    @Operation(summary = "Lọc tờ khai theo ngày và trạng thái")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Thành công", content = {
+                    @Content(schema = @Schema(implementation = com.pht.common.model.ApiDataResponse.class), mediaType = "application/json")
+            }),
+            @ApiResponse(responseCode = "400", description = "Dữ liệu request không hợp lệ", content = {
+                    @Content(schema = @Schema(implementation = com.pht.common.OrderBy.ApiErrorResponse.class), mediaType = "application/json")
+            }),
+            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = {
+                    @Content(schema = @Schema(implementation = com.pht.common.OrderBy.ApiErrorResponse.class), mediaType = "application/json")
+            })
+    })
+    @PostMapping("/filter")
+    public ResponseEntity<?> locToKhaiTheoNgayVaTrangThai(@RequestBody ToKhaiFilterRequest request) {
+        try {
+            log.info("Nhận yêu cầu lọc tờ khai theo ngày từ {} đến {} và trạng thái {}", 
+                    request.getTuNgay(), request.getDenNgay(), request.getTrangThai());
+            
+            List<StoKhai> toKhaiList = toKhaiThongTinService.filterToKhai(request);
+            
+            log.info("Tìm thấy {} tờ khai thỏa mãn điều kiện lọc", toKhaiList.size());
+            
+            return ResponseHelper.ok(toKhaiList);
+        } catch (Exception ex) {
+            log.error("Lỗi khi lọc tờ khai theo ngày và trạng thái: ", ex);
             return ResponseHelper.error(ex);
         }
     }

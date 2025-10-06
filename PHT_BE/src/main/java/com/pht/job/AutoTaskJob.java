@@ -289,13 +289,7 @@ public class AutoTaskJob {
 	 * Lưu ý: Map 'receipt' cần mapping đầy đủ theo spec FPT. Hiện tại mới map các trường cơ bản.
 	 */
 	private CreateIcrRequest buildCreateIcrRequestFromToKhai(StoKhai toKhai) {
-		CreateIcrRequest req = new CreateIcrRequest();
-		java.util.Map<String, Object> user = new java.util.HashMap<>();
-		String apiUsername = getSystemParamValue("BL_USER");
-		String apiPassword = getSystemParamValue("BL_PW");
-		user.put("username", apiUsername);
-		user.put("password", apiPassword);
-		req.setUser(user);
+        CreateIcrRequest req = new CreateIcrRequest();
 
 		// Receipt mapping theo mẫu yêu cầu
 		java.util.Map<String, Object> receipt = new java.util.HashMap<>();

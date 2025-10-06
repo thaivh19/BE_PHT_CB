@@ -61,4 +61,17 @@ public interface ToKhaiThongTinRepository extends BaseRepository<StoKhai, Long> 
     @Query("SELECT t FROM StoKhai t WHERE t.trangThaiNganHang = :ttnh AND t.idBienLai IS NULL AND (:maxFee IS NULL OR t.tongTienPhi < :maxFee)")
     List<StoKhai> findAuto(@Param("ttnh") String ttnh, @Param("maxFee") BigDecimal maxFee);
     
+    /**
+     * Lọc tờ khai theo ngày tờ khai và trạng thái
+     */
+    @Query(value = "SELECT * FROM STO_KHAI WHERE " +
+                   "(:tuNgay IS NULL OR NGAY_TK >= :tuNgay) AND " +
+                   "(:denNgay IS NULL OR NGAY_TK <= :denNgay) AND " +
+                   "(:trangThai IS NULL OR TRANGTHAI = :trangThai) " +
+                   "ORDER BY NGAY_TK DESC, ID DESC", 
+           nativeQuery = true)
+    List<StoKhai> findByNgayToKhaiAndTrangThai(@Param("tuNgay") java.time.LocalDate tuNgay, 
+                                               @Param("denNgay") java.time.LocalDate denNgay, 
+                                               @Param("trangThai") String trangThai);
+    
 }

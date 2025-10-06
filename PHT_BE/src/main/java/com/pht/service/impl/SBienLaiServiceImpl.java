@@ -1,7 +1,9 @@
 package com.pht.service.impl;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -308,7 +310,18 @@ public class SBienLaiServiceImpl extends BaseServiceImpl<SBienLai, Long> impleme
         // Quy ước: khoảng [fromDate, toDate] bao gồm cả toDate -> chuyển toDate+1 ngày cho truy vấn < toDateExclusive
         LocalDateTime fromDateTime = fromDate.atStartOfDay();
         LocalDateTime toDateExclusive = toDate.plusDays(1).atStartOfDay();
-        return sBienLaiRepository.reportBlThu(fromDateTime, toDateExclusive);
+        List<Object[]> rows = sBienLaiRepository.reportBlThuRaw(fromDateTime, toDateExclusive);
+        List<BlThuReportItem> result = new ArrayList<>();
+        for (Object[] row : rows) {
+            String mst = (String) row[0];
+            String tenDvi = (String) row[1];
+            java.sql.Date ngaySql = (java.sql.Date) row[2];
+            LocalDate ngay = ngaySql.toLocalDate();
+            BigDecimal tongTien = (BigDecimal) row[3];
+            Long soBienLai = ((Number) row[4]).longValue();
+            result.add(new BlThuReportItem(mst, tenDvi, ngay, tongTien, soBienLai));
+        }
+        return result;
     }
 
     @Override

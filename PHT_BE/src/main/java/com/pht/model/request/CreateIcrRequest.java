@@ -8,7 +8,7 @@ import lombok.Data;
 public class CreateIcrRequest {
     
     @Schema(description = "Thông tin user")
-    private Object user;
+    private UserRequest user;
     
     @Schema(description = "Thông tin biên lai/receipt theo spec FPT")
     private Object receipt;
