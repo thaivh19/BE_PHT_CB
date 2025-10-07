@@ -320,7 +320,7 @@ public class AutoTaskJob {
 
 		// Thông tin người mua
 		receipt.put("bname", nullToEmpty(toKhai.getTenDoanhNghiepXNK()));
-		receipt.put("btax", nullToEmpty(mstCb));
+		receipt.put("btax",nullToEmpty(toKhai.getMaDoanhNghiepXNK()));
 		receipt.put("bacc", nullToEmpty(toKhai.getMaDoanhNghiepXNK()));
 		// Các field chưa có trong StoKhai => để trống
 		receipt.put("buyer", "");
