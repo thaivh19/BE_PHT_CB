@@ -35,6 +35,8 @@ import com.pht.service.SBienLaiService;
 import com.pht.service.SthamSoService;
 import com.pht.util.PdfConverterUtil;
 import com.pht.utils.ConvertNumberToString;
+import com.pht.entity.SloaiHinh;
+import com.pht.repository.SloaiHinhRepository;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -58,6 +60,7 @@ public class FptEInvoiceController {
     private final SBienLaiService sBienLaiService;
     private final SthamSoService sthamSoService;
     private final PdfConverterUtil pdfConverterUtil;
+    private final SloaiHinhRepository sloaiHinhRepository;
 
     @Value("${fpt.einvoice.api.url:https://api-uat.einvoice.fpt.com.vn}")
     private String einvoiceApiUrl;
@@ -536,6 +539,7 @@ public class FptEInvoiceController {
     @SuppressWarnings("unchecked")
     private void ensureVietnameseAmountWord(CreateIcrRequest request) {
         try {
+
             Object receiptObj = request.getReceipt();
             if (!(receiptObj instanceof java.util.Map)) return;
             java.util.Map<String, Object> receipt = (java.util.Map<String, Object>) receiptObj;
@@ -543,7 +547,15 @@ public class FptEInvoiceController {
             Object wordObj = receipt.get("word");
             String wordStr = wordObj != null ? String.valueOf(wordObj).trim() : "";
 
-
+            SloaiHinh loaiHinh = null;
+            try {
+                Object c5Obj = receipt.get("c5");
+                if (c5Obj != null) {
+                    loaiHinh = sloaiHinhRepository.findFirstByMaLoaiHinh(String.valueOf(c5Obj).trim());
+                }
+            } catch (Exception ignore) { }
+            String nhomLoaiHinh = loaiHinh != null ? loaiHinh.getNhomLoaiHinh() : "XNK";
+            receipt.put("c6", nhomLoaiHinh);
             Long amount = extractAmountValue(receipt);
             if (amount != null && amount >= 0) {
                 String viWords = ConvertNumberToString.converNumToString(String.valueOf(amount));

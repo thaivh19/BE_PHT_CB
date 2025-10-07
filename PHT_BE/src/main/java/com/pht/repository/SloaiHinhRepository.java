@@ -35,4 +35,6 @@ public interface SloaiHinhRepository extends BaseRepository<SloaiHinh, Long> {
                                        @Param("trangThai") String trangThai);
 
     boolean existsByMaLoaiHinh(String maLoaiHinh);
+
+    SloaiHinh findFirstByMaLoaiHinh(String maLoaiHinh);
 }

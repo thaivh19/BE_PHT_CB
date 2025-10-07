@@ -11,10 +11,12 @@ import java.util.List;
 import com.pht.entity.SthamSo;
 import com.pht.entity.StoKhai;
 import com.pht.entity.StoKhaiCt;
+import com.pht.entity.SloaiHinh;
 import com.pht.service.SthamSoService;
 import com.pht.repository.ToKhaiThongTinRepository;
 import com.pht.repository.ToKhaiThongTinChiTietRepository;
 import com.pht.repository.SysUserRepository;
+import com.pht.repository.SloaiHinhRepository;
 import com.pht.entity.SysUser;
 import com.pht.controller.FptEInvoiceController;
 import com.pht.model.request.CreateIcrRequest;
@@ -68,6 +70,8 @@ public class AutoTaskJob {
 
 	@Autowired
 	private KbReconcileController kbReconcileController;
+
+
 
 	private static final String PARAM_JOB_ENABLED = "BL_AUTO_JOB"; // 1: on, 0: off
 
@@ -307,6 +311,7 @@ public class AutoTaskJob {
 		String blType = getSystemParamValue("BL_TYPE");
 		String blForm = getSystemParamValue("BL_FORM");
 		String blSerial = getSystemParamValue("BL_SERIAL");
+		String mstCb = getSystemParamValue("MST_CB");
 		if (notBlank(blType)) receipt.put("type", blType);
 		if (notBlank(blForm)) receipt.put("form", blForm);
 		if (notBlank(blSerial)) receipt.put("serial", blSerial);
@@ -315,7 +320,8 @@ public class AutoTaskJob {
 
 		// Thông tin người mua
 		receipt.put("bname", nullToEmpty(toKhai.getTenDoanhNghiepXNK()));
-		receipt.put("btax", nullToEmpty(toKhai.getMaDoanhNghiepXNK()));
+		receipt.put("btax", nullToEmpty(mstCb));
+		receipt.put("bacc", nullToEmpty(toKhai.getMaDoanhNghiepXNK()));
 		// Các field chưa có trong StoKhai => để trống
 		receipt.put("buyer", "");
 		receipt.put("bcode", "");
@@ -353,6 +359,29 @@ public class AutoTaskJob {
 		receipt.put("notsendmail", 0);
 		receipt.put("sendfile", 1);
 		receipt.put("sec", "");
+		receipt.put("c0", nullToEmpty(toKhai.getSoTiepNhanKhaiPhi()));
+		String c1Date = "";
+		if (toKhai.getNgayKhaiPhi() != null) {
+			try {
+				c1Date = toKhai.getNgayKhaiPhi().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+			} catch (Exception e) {
+				c1Date = String.valueOf(toKhai.getNgayKhaiPhi());
+			}
+		}
+		receipt.put("c1", c1Date);
+		receipt.put("c2", nullToEmpty(toKhai.getSoToKhai()));
+		String c3Date = "";
+		if (toKhai.getNgayKhaiPhi() != null) {
+			try {
+				c3Date = toKhai.getNgayToKhai().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+			} catch (Exception e) {
+				c3Date = String.valueOf(toKhai.getNgayToKhai());
+			}
+		}
+		receipt.put("c3", nullToEmpty(c3Date));
+		receipt.put("c5", nullToEmpty(toKhai.getMaLoaiHinh()));
+		
+		
 
 		// Items từ StoKhaiCt
 		java.util.List<StoKhaiCt> chiTietList = toKhaiThongTinChiTietRepository.findByToKhaiThongTinID(toKhai.getId());
@@ -374,7 +403,7 @@ public class AutoTaskJob {
 		receipt.put("items", items);
 
 		// STAX: theo mẫu sử dụng mã số thuế
-		receipt.put("stax", nullToEmpty(toKhai.getMaDoanhNghiepKhaiPhi()));
+		receipt.put("stax", nullToEmpty(mstCb));
 
 		// Có thể cần items/chi tiết phí -> truy vấn StoKhaiCt nếu FPT yêu cầu
 
