@@ -10,8 +10,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.pht.entity.SBienLai;
-import com.pht.model.response.BlThuReportItem;
-import com.pht.model.response.KhoBlReportItem;
 
 @Repository
 public interface SBienLaiRepository extends BaseRepository<SBienLai, Long> {
@@ -50,6 +48,20 @@ public interface SBienLaiRepository extends BaseRepository<SBienLai, Long> {
     boolean existsBySoBl(String soBl);
     
     SBienLai findByMaBl(String maBl);
+
+    // Tìm kiếm biên lai theo ngày biên lai từ ngày đến ngày
+    @Query("SELECT s FROM SBienLai s WHERE " +
+           "s.ngayBl >= :fromDate AND s.ngayBl <= :toDate " +
+           "ORDER BY s.ngayBl ASC")
+    Page<SBienLai> findByNgayBlBetween(@Param("fromDate") LocalDateTime fromDate,
+                                        @Param("toDate") LocalDateTime toDate,
+                                        Pageable pageable);
+
+    @Query("SELECT s FROM SBienLai s WHERE " +
+           "s.ngayBl >= :fromDate AND s.ngayBl <= :toDate " +
+           "ORDER BY s.ngayBl ASC")
+    List<SBienLai> findByNgayBlBetween(@Param("fromDate") LocalDateTime fromDate,
+                                       @Param("toDate") LocalDateTime toDate);
 
     /**
      * Báo cáo BL thu: lọc các biên lai của những tờ khai có trạng thái = '04',

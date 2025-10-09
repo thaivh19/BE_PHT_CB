@@ -305,4 +305,70 @@ public class SBienLaiController {
             return ResponseHelper.error(ex);
         }
     }
+
+    // ========== DATE RANGE SEARCH ==========
+
+    @Operation(summary = "Tìm kiếm biên lai theo ngày biên lai từ ngày đến ngày (có phân trang)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Thành công", content = {
+                    @Content(schema = @Schema(implementation = CatalogSearchResponse.class), mediaType = "application/json")
+            }),
+            @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ", content = {
+                    @Content(schema = @Schema(implementation = OrderBy.ApiErrorResponse.class), mediaType = "application/json")
+            }),
+            @ApiResponse(responseCode = "500", description = "Lỗi", content = {
+                    @Content(schema = @Schema(implementation = OrderBy.ApiErrorResponse.class), mediaType = "application/json")
+            })
+    })
+    @GetMapping("/search-by-date")
+    public ResponseEntity<?> searchBienLaiByDateRange(@RequestParam("fromDate") String fromDateStr,
+                                                     @RequestParam("toDate") String toDateStr,
+                                                     @RequestParam(defaultValue = "0") int page,
+                                                     @RequestParam(defaultValue = "10") int size) {
+        try {
+            LocalDate fromDate = LocalDate.parse(fromDateStr);
+            LocalDate toDate = LocalDate.parse(toDateStr);
+            
+            if (fromDate.isAfter(toDate)) {
+                return ResponseHelper.invalid("Ngày bắt đầu không được sau ngày kết thúc");
+            }
+            
+            CatalogSearchResponse<SBienLai> result = sBienLaiService.searchBienLaiByDateRange(fromDate, toDate, page, size);
+            return ResponseHelper.ok(result);
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return ResponseHelper.error(ex);
+        }
+    }
+
+    @Operation(summary = "Tìm kiếm biên lai theo ngày biên lai từ ngày đến ngày (không phân trang)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Thành công", content = {
+                    @Content(schema = @Schema(implementation = ApiDataResponse.class), mediaType = "application/json")
+            }),
+            @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ", content = {
+                    @Content(schema = @Schema(implementation = OrderBy.ApiErrorResponse.class), mediaType = "application/json")
+            }),
+            @ApiResponse(responseCode = "500", description = "Lỗi", content = {
+                    @Content(schema = @Schema(implementation = OrderBy.ApiErrorResponse.class), mediaType = "application/json")
+            })
+    })
+    @GetMapping("/search-by-date-list")
+    public ResponseEntity<?> searchBienLaiByDateRangeList(@RequestParam("fromDate") String fromDateStr,
+                                                          @RequestParam("toDate") String toDateStr) {
+        try {
+            LocalDate fromDate = LocalDate.parse(fromDateStr);
+            LocalDate toDate = LocalDate.parse(toDateStr);
+            
+            if (fromDate.isAfter(toDate)) {
+                return ResponseHelper.invalid("Ngày bắt đầu không được sau ngày kết thúc");
+            }
+            
+            List<SBienLai> result = sBienLaiService.searchBienLaiByDateRange(fromDate, toDate);
+            return ResponseHelper.ok(result);
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return ResponseHelper.error(ex);
+        }
+    }
 }

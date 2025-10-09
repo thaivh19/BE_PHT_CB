@@ -40,4 +40,9 @@ public interface SBienLaiService extends BaseService<SBienLai, Long> {
 
     // Báo cáo tổng hợp biên lai theo mã kho trong khoảng ngày
     List<KhoBlReportItem> reportByKho(LocalDate fromDate, LocalDate toDate);
+
+    // Tìm kiếm biên lai theo ngày biên lai từ ngày đến ngày
+    CatalogSearchResponse<SBienLai> searchBienLaiByDateRange(LocalDate fromDate, LocalDate toDate, int page, int size);
+    
+    List<SBienLai> searchBienLaiByDateRange(LocalDate fromDate, LocalDate toDate);
 }

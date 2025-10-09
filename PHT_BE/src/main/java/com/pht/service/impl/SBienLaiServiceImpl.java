@@ -383,4 +383,43 @@ public class SBienLaiServiceImpl extends BaseServiceImpl<SBienLai, Long> impleme
             // Không throw exception để không ảnh hưởng đến việc tạo biên lai
         }
     }
+
+    @Override
+    public CatalogSearchResponse<SBienLai> searchBienLaiByDateRange(LocalDate fromDate, LocalDate toDate, int page, int size) {
+        long startTime = System.currentTimeMillis();
+        log.info("Tìm kiếm biên lai theo ngày từ {} đến {}", fromDate, toDate);
+
+        // Chuyển đổi LocalDate thành LocalDateTime
+        LocalDateTime fromDateTime = fromDate.atStartOfDay();
+        LocalDateTime toDateTime = toDate.plusDays(1).atStartOfDay().minusSeconds(1);
+
+        Sort sort = Sort.by(Sort.Direction.ASC, "ngayBl");
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<SBienLai> pageResult = sBienLaiRepository.findByNgayBlBetween(fromDateTime, toDateTime, pageable);
+
+        long endTime = System.currentTimeMillis();
+
+        return CatalogSearchResponse.<SBienLai>builder()
+                .content(pageResult.getContent())
+                .pageNumber(page)
+                .pageSize(size)
+                .totalPages(pageResult.getTotalPages())
+                .numberOfElements(pageResult.getNumberOfElements())
+                .totalElements(pageResult.getTotalElements())
+                .searchKeyword(String.format("fromDate=%s, toDate=%s", fromDate, toDate))
+                .searchTime(endTime - startTime)
+                .build();
+    }
+
+    @Override
+    public List<SBienLai> searchBienLaiByDateRange(LocalDate fromDate, LocalDate toDate) {
+        log.info("Tìm kiếm biên lai theo ngày từ {} đến {} (không phân trang)", fromDate, toDate);
+
+        // Chuyển đổi LocalDate thành LocalDateTime
+        LocalDateTime fromDateTime = fromDate.atStartOfDay();
+        LocalDateTime toDateTime = toDate.plusDays(1).atStartOfDay().minusSeconds(1);
+
+        return sBienLaiRepository.findByNgayBlBetween(fromDateTime, toDateTime);
+    }
 }
