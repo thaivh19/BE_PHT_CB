@@ -21,6 +21,7 @@ import com.pht.model.request.ToKhaiFilterRequest;
 import com.pht.model.request.ToKhaiThongTinRequest;
 import com.pht.model.request.UpdateTrangThaiPhatHanhRequest;
 import com.pht.model.request.UpdateTrangThaiRequest;
+import com.pht.model.request.UpdateToKhaiRequest;
 import com.pht.model.response.NotificationResponse;
 import com.pht.service.ToKhaiThongTinService;
 
@@ -327,6 +328,44 @@ public class ToKhaiThongTinController {
             return ResponseHelper.ok(toKhaiList);
         } catch (Exception ex) {
             log.error("Lỗi khi lọc tờ khai theo ngày và trạng thái: ", ex);
+            return ResponseHelper.error(ex);
+        }
+    }
+
+    @Operation(summary = "Cập nhật tờ khai thông tin")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Thành công", content = {
+                    @Content(schema = @Schema(implementation = com.pht.common.model.ApiDataResponse.class), mediaType = "application/json")
+            }),
+            @ApiResponse(responseCode = "400", description = "Dữ liệu request không hợp lệ", content = {
+                    @Content(schema = @Schema(implementation = com.pht.common.OrderBy.ApiErrorResponse.class), mediaType = "application/json")
+            }),
+            @ApiResponse(responseCode = "404", description = "Không tìm thấy tờ khai", content = {
+                    @Content(schema = @Schema(implementation = com.pht.common.OrderBy.ApiErrorResponse.class), mediaType = "application/json")
+            }),
+            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = {
+                    @Content(schema = @Schema(implementation = com.pht.common.OrderBy.ApiErrorResponse.class), mediaType = "application/json")
+            })
+    })
+    @PutMapping("/update")
+    public ResponseEntity<?> capNhatToKhai(@RequestBody UpdateToKhaiRequest request) {
+        try {
+            log.info("Nhận yêu cầu cập nhật tờ khai với ID: {}", request.getId());
+            
+            if (request.getId() == null) {
+                return ResponseHelper.invalid("ID tờ khai không được để trống");
+            }
+            
+            StoKhai updatedToKhai = toKhaiThongTinService.updateToKhai(request);
+            
+            log.info("Cập nhật tờ khai thành công với ID: {}", updatedToKhai.getId());
+            
+            return ResponseHelper.ok(updatedToKhai);
+        } catch (BusinessException ex) {
+            log.error("Lỗi business khi cập nhật tờ khai: {}", ex.getMessage());
+            return ResponseHelper.error(ex);
+        } catch (Exception ex) {
+            log.error("Lỗi khi cập nhật tờ khai: ", ex);
             return ResponseHelper.error(ex);
         }
     }

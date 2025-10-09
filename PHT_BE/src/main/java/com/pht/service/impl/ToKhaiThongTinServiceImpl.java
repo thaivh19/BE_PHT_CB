@@ -23,6 +23,7 @@ import com.pht.model.request.ToKhaiThongTinChiTietRequest;
 import com.pht.model.request.ToKhaiThongTinRequest;
 import com.pht.model.request.UpdateTrangThaiRequest;
 import com.pht.model.request.UpdateTrangThaiPhatHanhRequest;
+import com.pht.model.request.UpdateToKhaiRequest;
 import com.pht.model.response.NotificationResponse;
 import com.pht.repository.ToKhaiThongTinChiTietRepository;
 import com.pht.repository.ToKhaiThongTinRepository;
@@ -549,5 +550,41 @@ public class ToKhaiThongTinServiceImpl extends BaseServiceImpl<StoKhai, Long> im
             log.error("Lỗi khi tìm đơn giá cho maDvt: {}, loaiHang: {}", maDvt, loaiHang, e);
             return null;
         }
+    }
+
+    @Override
+    @Transactional
+    public StoKhai updateToKhai(UpdateToKhaiRequest request) throws BusinessException {
+        log.info("Bắt đầu cập nhật tờ khai với ID: {}", request.getId());
+        
+        // Kiểm tra tờ khai có tồn tại không
+        StoKhai existingToKhai = toKhaiThongTinRepository.findById(request.getId())
+                .orElseThrow(() -> new BusinessException("Không tìm thấy tờ khai với ID: " + request.getId()));
+        
+        // Cập nhật thông tin tờ khai
+        BeanUtils.copyProperties(request, existingToKhai, "id", "chiTietList");
+        
+        // Xử lý chi tiết nếu có
+        if (request.getChiTietList() != null && !request.getChiTietList().isEmpty()) {
+            // Xóa tất cả chi tiết cũ
+            List<StoKhaiCt> existingChiTiet = toKhaiThongTinChiTietRepository.findByToKhaiThongTinID(request.getId());
+            toKhaiThongTinChiTietRepository.deleteAll(existingChiTiet);
+            
+            // Thêm chi tiết mới
+            for (ToKhaiThongTinChiTietRequest chiTietRequest : request.getChiTietList()) {
+                StoKhaiCt chiTiet = new StoKhaiCt();
+                BeanUtils.copyProperties(chiTietRequest, chiTiet);
+                chiTiet.setToKhaiThongTinID(request.getId());
+                chiTiet.setStoKhai(existingToKhai);
+                toKhaiThongTinChiTietRepository.save(chiTiet);
+            }
+        }
+        
+        // Lưu tờ khai đã cập nhật
+        StoKhai updatedToKhai = toKhaiThongTinRepository.save(existingToKhai);
+        
+        log.info("Cập nhật tờ khai thành công với ID: {}", updatedToKhai.getId());
+        
+        return updatedToKhai;
     }
 }

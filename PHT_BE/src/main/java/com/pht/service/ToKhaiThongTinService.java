@@ -9,6 +9,7 @@ import com.pht.model.request.ToKhaiThongTinRequest;
 import com.pht.model.request.ToKhaiFilterRequest;
 import com.pht.model.request.UpdateTrangThaiRequest;
 import com.pht.model.request.UpdateTrangThaiPhatHanhRequest;
+import com.pht.model.request.UpdateToKhaiRequest;
 import com.pht.model.response.NotificationResponse;
 
 public interface ToKhaiThongTinService extends BaseService<StoKhai, Long> {
@@ -28,5 +29,7 @@ public interface ToKhaiThongTinService extends BaseService<StoKhai, Long> {
     List<StoKhai> findByTrangThai(String trangThai);
     
     List<StoKhai> filterToKhai(ToKhaiFilterRequest request);
+    
+    StoKhai updateToKhai(UpdateToKhaiRequest request) throws BusinessException;
     
 }
